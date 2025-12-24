@@ -1,0 +1,53 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # ========================================
+  # Ultra SD card group (5 nodes)
+  # ========================================
+  - job_name: 'rpi_ultra'
+    static_configs:
+      - targets:
+          - '172.17.141.30:9100'    # pi-ultra-1
+          - '172.17.143.14:9100'    # pi-ultra-2
+          - '172.17.143.236:9100'   # pi-ultra-3
+          - '172.17.141.209:9100'   # pi-ultra-4
+          - '172.17.143.146:9100'   # pi-ultra-5
+        labels:
+          sd_card_type: 'ultra'
+          group: 'rpi_cluster'
+
+  # ========================================
+  # High Endurance SD card group (5 nodes)
+  # ========================================
+  - job_name: 'rpi_high_endurance'
+    static_configs:
+      - targets:
+          - '172.17.143.51:9100'    # pi-hend-1
+          - '172.17.143.99:9100'    # pi-hend-2
+          - '172.17.142.211:9100'   # pi-hend-3
+          - '172.17.141.2:9100'     # pi-hend-4
+          - '172.17.142.226:9100'   # pi-hend-5
+        labels:
+          sd_card_type: 'high_endurance'
+          group: 'rpi_cluster'
+
+  # ========================================
+  # Industrial SD card group (5 nodes)
+  # ========================================
+  - job_name: 'rpi_industrial'
+    static_configs:
+      - targets:
+          - '172.17.143.197:9100'   # pi-ind-1
+          - '172.17.141.95:9100'    # pi-ind-2
+          - '172.17.142.47:9100'    # pi-ind-3
+          - '172.17.141.201:9100'   # pi-ind-4
+          - '172.17.142.142:9100'   # pi-ind-5
+        labels:
+          sd_card_type: 'industrial'
+          group: 'rpi_cluster'

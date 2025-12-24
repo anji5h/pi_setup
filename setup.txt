@@ -1,0 +1,10 @@
+git clone https://github.com/anji5h/pi_setup.git && \
+cd pi_setup && \
+sudo chmod +x install_node_exporter.sh && \
+./install_node_exporter.sh
+
+
+cd ~/pi_setup && \
+sudo chmod +x install_sdmon.sh setup_sdmon_exporter.sh && \
+./install_sdmon.sh && \
+./setup_sdmon_exporter.sh
