@@ -25,6 +25,7 @@ INFLUXDB_ORG=ut
 INFLUXDB_BUCKET=home_assistant
 INFLUXDB_USER=anji5h
 INFLUXDB_PASSWORD=T@rtu8090
+SIMULATOR_FREQUENCY=100
 EOF
 
 echo ">>> Starting application with Docker Compose..."
