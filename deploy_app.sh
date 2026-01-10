@@ -9,11 +9,11 @@ echo ">>> Cloning repository..."
 if [ -d "$DIR_NAME" ]; then
     echo "Directory '$DIR_NAME' already exists. Skipping clone."
 else
-    git clone "$REPO_URL"
+    git clone "$REPO_URL" ~/"$DIR_NAME"
 fi
 
 echo ">>> Navigating into directory..."
-cd "$DIR_NAME"
+cd ~/"$DIR_NAME"
 
 echo ">>> Generating a strong random InfluxDB token..."
 INFLUXDB_TOKEN=$(head /dev/urandom | tr -dc 'A-Za-z0-9!@#$%^&*()_+-=[]{}|;:,.<>?' | head -c 32)
