@@ -23,14 +23,14 @@ echo "Please specify the following configuration values (press Enter to use defa
 echo ""
 
 # InfluxDB retention period
-read -p "InfluxDB retention period [72h]: " INFLUXDB_RETENTION
+read -p "InfluxDB retention period (hours) [72h]: " INFLUXDB_RETENTION
 INFLUXDB_RETENTION=${INFLUXDB_RETENTION:-72h}
 
 # Simulator settings
 read -p "Simulator: points per batch [65]: " SIMULATOR_POINTS_PER_BATCH
 SIMULATOR_POINTS_PER_BATCH=${SIMULATOR_POINTS_PER_BATCH:-65}
 
-read -p "Simulator: batch interval (seconds) [5]: " SIMULATOR_BATCH_SIZE
+read -p "Simulator: batch size [5]: " SIMULATOR_BATCH_SIZE
 SIMULATOR_BATCH_SIZE=${SIMULATOR_BATCH_SIZE:-5}
 
 # InfluxDB write/read intervals
