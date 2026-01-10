@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Exit immediately if a command exits with a non-zero status
 set -e
 
@@ -19,24 +18,52 @@ cd "$DIR_NAME"
 echo ">>> Generating a strong random InfluxDB token..."
 INFLUXDB_TOKEN=$(head /dev/urandom | tr -dc 'A-Za-z0-9!@#$%^&*()_+-=[]{}|;:,.<>?' | head -c 32)
 
-echo ">>> Creating .env file..."
+echo ""
+echo "Please specify the following configuration values (press Enter to use default):"
+echo ""
+
+# InfluxDB retention period
+read -p "InfluxDB retention period [72h]: " INFLUXDB_RETENTION
+INFLUXDB_RETENTION=${INFLUXDB_RETENTION:-72h}
+
+# Simulator settings
+read -p "Simulator: points per batch [65]: " SIMULATOR_POINTS_PER_BATCH
+SIMULATOR_POINTS_PER_BATCH=${SIMULATOR_POINTS_PER_BATCH:-65}
+
+read -p "Simulator: batch interval (seconds) [5]: " SIMULATOR_BATCH_SIZE
+SIMULATOR_BATCH_SIZE=${SIMULATOR_BATCH_SIZE:-5}
+
+# InfluxDB write/read intervals
+read -p "InfluxDB write interval (seconds) [5]: " INFLUX_WRITE_INTERVAL
+INFLUX_WRITE_INTERVAL=${INFLUX_WRITE_INTERVAL:-5}
+
+read -p "InfluxDB read interval (seconds) [20]: " INFLUX_READ_INTERVAL
+INFLUX_READ_INTERVAL=${INFLUX_READ_INTERVAL:-20}
+
+echo ""
+echo ">>> Creating .env file with your settings..."
 cat <<EOF > .env
+# InfluxDB connection
 INFLUXDB_HOST=influxdb
 INFLUXDB_PORT=8086
 INFLUXDB_TOKEN=$INFLUXDB_TOKEN
 INFLUXDB_ORG=ut
 INFLUXDB_BUCKET=home_assistant
-INFLUXDB_RETENTION=12h
+INFLUXDB_RETENTION=$INFLUXDB_RETENTION
+
+# Authentication (used mainly for direct access / testing)
 INFLUXDB_USER=anji5h
 INFLUXDB_PASSWORD=T@rtu8090
-SIMULATOR_FREQUENCY=320
-SIMULATOR_BATCH_SIZE=5
-INFLUX_WRITE_INTERVAL=5
-INFLUX_READ_INTERVAL=5
+
+# Simulator & application timing
+SIMULATOR_POINTS_PER_BATCH=$SIMULATOR_POINTS_PER_BATCH
+SIMULATOR_BATCH_SIZE=$SIMULATOR_BATCH_SIZE
+INFLUX_WRITE_INTERVAL=$INFLUX_WRITE_INTERVAL
+INFLUX_READ_INTERVAL=$INFLUX_READ_INTERVAL
 EOF
 
 echo ">>> .env file created successfully."
-
+echo ""
 echo ">>> Starting application with Docker Compose..."
 docker compose up -d --build
 
@@ -44,8 +71,15 @@ echo "=================================================="
 echo "Deployment Complete!"
 echo ""
 echo "IMPORTANT: Your InfluxDB token is:"
-echo "    $INFLUXDB_TOKEN"
+echo "  $INFLUXDB_TOKEN"
 echo ""
 echo "Save it somewhere safe if you need to access InfluxDB directly"
-echo "(e.g., via CLI, UI, or API). It is only shown now and stored in .env."
+echo "(via CLI, UI, or API). It is only shown now and stored in .env."
+echo ""
+echo "Used configuration:"
+echo "  Retention period     : $INFLUXDB_RETENTION"
+echo "  Points per batch     : $SIMULATOR_POINTS_PER_BATCH"
+echo "  Batch size          : $SIMULATOR_BATCH_SIZE s"
+echo "  Influx write interval: $INFLUX_WRITE_INTERVAL s"
+echo "  Influx read interval : $INFLUX_READ_INTERVAL s"
 echo "=================================================="
