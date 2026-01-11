@@ -3,28 +3,28 @@
 set -e
 
 REPO_URL="https://github.com/anji5h/home_assistant.git"
-DIR_NAME="home_assistant"
+DIR_NAME="/home/pi/home_assistant"
 
 echo ">>> Cloning repository..."
 if [ -d "$DIR_NAME" ]; then
     echo "Directory '$DIR_NAME' already exists. Skipping clone."
 else
-    git clone "$REPO_URL" ~/"$DIR_NAME"
+    git clone "$REPO_URL" "$DIR_NAME"
 fi
 
 echo ">>> Navigating into directory..."
-cd ~/"$DIR_NAME"
+cd "$DIR_NAME"
 
 echo ">>> Generating a strong random InfluxDB token..."
-INFLUXDB_TOKEN=$(head /dev/urandom | tr -dc 'A-Za-z0-9!@#$%^&*()_+-=[]{}|;:,.<>?' | head -c 32)
+INFLUXDB_TOKEN=$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 32)
 
 echo ""
 echo "Please specify the following configuration values (press Enter to use default):"
 echo ""
 
 # InfluxDB retention period
-read -p "InfluxDB retention period (hours) [72h]: " INFLUXDB_RETENTION
-INFLUXDB_RETENTION=${INFLUXDB_RETENTION:-72h}
+read -p "InfluxDB retention period (hours) [72]: " INFLUXDB_RETENTION
+INFLUXDB_RETENTION="${INFLUXDB_RETENTION:-72}h"
 
 # Simulator settings
 read -p "Simulator: points per batch [65]: " SIMULATOR_POINTS_PER_BATCH
@@ -43,19 +43,14 @@ INFLUX_READ_INTERVAL=${INFLUX_READ_INTERVAL:-20}
 echo ""
 echo ">>> Creating .env file with your settings..."
 cat <<EOF > .env
-# InfluxDB connection
 INFLUXDB_HOST=influxdb
 INFLUXDB_PORT=8086
 INFLUXDB_TOKEN=$INFLUXDB_TOKEN
 INFLUXDB_ORG=ut
 INFLUXDB_BUCKET=home_assistant
 INFLUXDB_RETENTION=$INFLUXDB_RETENTION
-
-# Authentication (used mainly for direct access / testing)
 INFLUXDB_USER=anji5h
 INFLUXDB_PASSWORD=T@rtu8090
-
-# Simulator & application timing
 SIMULATOR_POINTS_PER_BATCH=$SIMULATOR_POINTS_PER_BATCH
 SIMULATOR_BATCH_SIZE=$SIMULATOR_BATCH_SIZE
 INFLUX_WRITE_INTERVAL=$INFLUX_WRITE_INTERVAL
