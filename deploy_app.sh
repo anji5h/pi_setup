@@ -15,6 +15,9 @@ fi
 echo ">>> Navigating into directory..."
 cd "$DIR_NAME"
 
+echo ">>> Making init.sh executable..."
+chmod +x init.sh
+
 echo ">>> Generating a strong random InfluxDB token..."
 INFLUXDB_TOKEN=$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 32)
 
