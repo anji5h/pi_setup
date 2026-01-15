@@ -18,42 +18,44 @@ cd "$DIR_NAME"
 echo ">>> Making init.sh executable..."
 chmod +x init.sh
 
-echo ">>> Generating a strong random InfluxDB token..."
-INFLUXDB_TOKEN=$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 32)
+echo ">>> Generating a strong random password for PostgreSQL (10 characters)..."
+POSTGRES_PASSWORD=$(head /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 10)
 
 echo ""
 echo "Please specify the following configuration values (press Enter to use default):"
 echo ""
 
-# InfluxDB retention period
-read -p "InfluxDB retention period (hours) [72]: " INFLUXDB_RETENTION
-INFLUXDB_RETENTION="${INFLUXDB_RETENTION:-72}h"
+# Workload type
+read -p "Workload type [LOW]: " WORKLOAD
+WORKLOAD=$(echo "${WORKLOAD:-LOW}" | tr '[:lower:]' '[:upper:]')
 
-# Simulator settings
-read -p "InfluxDB total points [500]: " INFLUX_TOTAL_POINTS
-INFLUX_TOTAL_POINTS=${INFLUX_TOTAL_POINTS:-500}
+# Write / Read intervals
+read -p "Write interval (seconds) [10]: " WRITE_INTERVAL
+WRITE_INTERVAL="${WRITE_INTERVAL:-10}"
 
-# InfluxDB write/read intervals
-read -p "InfluxDB write interval (seconds) [5]: " INFLUX_WRITE_INTERVAL
-INFLUX_WRITE_INTERVAL=${INFLUX_WRITE_INTERVAL:-5}
+read -p "Read interval (seconds) [10]: " READ_INTERVAL
+READ_INTERVAL="${READ_INTERVAL:-10}"
 
-read -p "InfluxDB read interval (seconds) [20]: " INFLUX_READ_INTERVAL
-INFLUX_READ_INTERVAL=${INFLUX_READ_INTERVAL:-20}
+# TimescaleDB retention & compression
+read -p "TimescaleDB retention period (days) [3]: " TIMESCALE_RETENTION_DAYS
+TIMESCALE_RETENTION_DAYS="${TIMESCALE_RETENTION_DAYS:-3}"
+
+read -p "TimescaleDB compression after (days) [1]: " TIMESCALE_COMPRESSION_DAYS
+TIMESCALE_COMPRESSION_DAYS="${TIMESCALE_COMPRESSION_DAYS:-1}"
 
 echo ""
 echo ">>> Creating .env file with your settings..."
 cat <<EOF > .env
-INFLUXDB_HOST=influxdb
-INFLUXDB_PORT=8086
-INFLUXDB_TOKEN=$INFLUXDB_TOKEN
-INFLUXDB_ORG=ut
-INFLUXDB_BUCKET=home_assistant
-INFLUXDB_RETENTION=$INFLUXDB_RETENTION
-INFLUXDB_USER=anji5h
-INFLUXDB_PASSWORD=T@rtu8090
-INFLUX_TOTAL_POINTS=$INFLUX_TOTAL_POINTS
-INFLUX_WRITE_INTERVAL=$INFLUX_WRITE_INTERVAL
-INFLUX_READ_INTERVAL=$INFLUX_READ_INTERVAL
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=home_assistant
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+WORKLOAD=${WORKLOAD}
+WRITE_INTERVAL=${WRITE_INTERVAL}
+READ_INTERVAL=${READ_INTERVAL}
+TIMESCALE_RETENTION_DAYS=${TIMESCALE_RETENTION_DAYS}
+TIMESCALE_COMPRESSION_DAYS=${TIMESCALE_COMPRESSION_DAYS}
 EOF
 
 echo ">>> .env file created successfully."
@@ -64,16 +66,16 @@ docker compose up -d --build
 echo "=================================================="
 echo "Deployment Complete!"
 echo ""
-echo "IMPORTANT: Your InfluxDB token is:"
-echo "  $INFLUXDB_TOKEN"
+echo "IMPORTANT: Your PostgreSQL password is:"
+echo "  ${POSTGRES_PASSWORD}"
 echo ""
-echo "Save it somewhere safe if you need to access InfluxDB directly"
-echo "(via CLI, UI, or API). It is only shown now and stored in .env."
+echo "Save it somewhere safe if you need to access PostgreSQL directly"
+echo "(via psql, UI, or any client). It is only shown now!"
 echo ""
 echo "Used configuration:"
-echo "  Retention period     : $INFLUXDB_RETENTION"
-echo "  Points per batch     : $SIMULATOR_POINTS_PER_BATCH"
-echo "  Batch size          : $SIMULATOR_BATCH_SIZE s"
-echo "  Influx write interval: $INFLUX_WRITE_INTERVAL s"
-echo "  Influx read interval : $INFLUX_READ_INTERVAL s"
+echo "  Workload              : ${WORKLOAD}"
+echo "  Write interval        : ${WRITE_INTERVAL} seconds"
+echo "  Read interval         : ${READ_INTERVAL} seconds"
+echo "  Retention period      : ${TIMESCALE_RETENTION_DAYS} days"
+echo "  Compression after     : ${TIMESCALE_COMPRESSION_DAYS} days"
 echo "=================================================="
