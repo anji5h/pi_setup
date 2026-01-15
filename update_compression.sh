@@ -14,15 +14,15 @@ docker exec -i home-assistant-postgres psql \
 -- Remove existing compression policy (if any)
 DO \$\$
 DECLARE
-    job_id INTEGER;
+    v_job_id INTEGER;
 BEGIN
-    SELECT job_id INTO job_id
+    SELECT job_id INTO v_job_id
     FROM timescaledb_information.jobs
     WHERE proc_name = 'policy_compression'
       AND hypertable_name = 'environment';
 
-    IF job_id IS NOT NULL THEN
-        PERFORM remove_job(job_id);
+    IF v_job_id IS NOT NULL THEN
+        PERFORM remove_job(v_job_id);
     END IF;
 END
 \$\$;
