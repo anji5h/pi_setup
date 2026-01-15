@@ -1,17 +1,18 @@
 #!/bin/bash
-# Exit immediately if a command exits with a non-zero status
 set -e
 
 echo ">>> Updating TimescaleDB compression policy..."
 read -p "Enter compression threshold in hours [6]: " COMPRESSION_HOURS
 COMPRESSION_HOURS="${COMPRESSION_HOURS:-6}"
 
+echo ">>> Applying compression after ${COMPRESSION_HOURS} hours..."
+
 docker exec -i home-assistant-postgres psql \
   -U postgres \
-  -d home_assistant <<'EOSQL'
+  -d home_assistant <<EOSQL
 
 -- Remove existing compression policy (if any)
-DO $$
+DO \$\$
 DECLARE
     job_id INTEGER;
 BEGIN
@@ -24,7 +25,7 @@ BEGIN
         PERFORM remove_job(job_id);
     END IF;
 END
-$$;
+\$\$;
 
 -- Add compression policy: compress chunks older than ${COMPRESSION_HOURS} hours
 SELECT add_compression_policy(
@@ -33,4 +34,5 @@ SELECT add_compression_policy(
 );
 
 EOSQL
-echo ">>> Updated compression policy to compress chunks older than ${COMPRESSION_HOURS} hours."
+
+echo ">>> Compression policy updated successfully."
