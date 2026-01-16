@@ -32,8 +32,8 @@ echo "Please specify the following configuration values (press Enter to use defa
 echo ""
 
 # Workload type
-read -p "Workload type [LOW]: " WORKLOAD
-WORKLOAD=$(echo "${WORKLOAD:-LOW}" | tr '[:lower:]' '[:upper:]')
+read -p "Workload type [HIGH]: " WORKLOAD
+WORKLOAD=$(echo "${WORKLOAD:-HIGH}" | tr '[:lower:]' '[:upper:]')
 
 # Write / Read intervals
 read -p "Write interval (seconds) [3]: " WRITE_INTERVAL
