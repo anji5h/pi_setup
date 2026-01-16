@@ -43,8 +43,8 @@ read -p "Read interval (seconds) [10]: " READ_INTERVAL
 READ_INTERVAL="${READ_INTERVAL:-10}"
 
 # TimescaleDB retention & compression
-read -p "TimescaleDB retention period (days) [3]: " TIMESCALE_RETENTION_DAYS
-TIMESCALE_RETENTION_DAYS="${TIMESCALE_RETENTION_DAYS:-3}"
+read -p "TimescaleDB retention period (hours) [24]: " TIMESCALE_RETENTION_HOURS
+TIMESCALE_RETENTION_HOURS="${TIMESCALE_RETENTION_HOURS:-24}"
 
 read -p "TimescaleDB compression after (hours) [6]: " TIMESCALE_COMPRESSION_HOURS
 TIMESCALE_COMPRESSION_HOURS="${TIMESCALE_COMPRESSION_HOURS:-6}"
@@ -60,7 +60,7 @@ POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 WORKLOAD=${WORKLOAD}
 WRITE_INTERVAL=${WRITE_INTERVAL}
 READ_INTERVAL=${READ_INTERVAL}
-TIMESCALE_RETENTION_DAYS=${TIMESCALE_RETENTION_DAYS}
+TIMESCALE_RETENTION_HOURS=${TIMESCALE_RETENTION_HOURS}
 TIMESCALE_COMPRESSION_HOURS=${TIMESCALE_COMPRESSION_HOURS}
 EOF
 
@@ -82,6 +82,6 @@ echo "Used configuration:"
 echo "  Workload              : ${WORKLOAD}"
 echo "  Write interval        : ${WRITE_INTERVAL} seconds"
 echo "  Read interval         : ${READ_INTERVAL} seconds"
-echo "  Retention period      : ${TIMESCALE_RETENTION_DAYS} days"
+echo "  Retention period      : ${TIMESCALE_RETENTION_HOURS} hours"
 echo "  Compression after     : ${TIMESCALE_COMPRESSION_HOURS} hours"
 echo "=================================================="
