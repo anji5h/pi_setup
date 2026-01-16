@@ -36,11 +36,11 @@ read -p "Workload type [LOW]: " WORKLOAD
 WORKLOAD=$(echo "${WORKLOAD:-LOW}" | tr '[:lower:]' '[:upper:]')
 
 # Write / Read intervals
-read -p "Write interval (seconds) [10]: " WRITE_INTERVAL
-WRITE_INTERVAL="${WRITE_INTERVAL:-10}"
+read -p "Write interval (seconds) [3]: " WRITE_INTERVAL
+WRITE_INTERVAL="${WRITE_INTERVAL:-3}"
 
-read -p "Read interval (seconds) [10]: " READ_INTERVAL
-READ_INTERVAL="${READ_INTERVAL:-10}"
+read -p "Read interval (seconds) [6]: " READ_INTERVAL
+READ_INTERVAL="${READ_INTERVAL:-6}"
 
 # TimescaleDB retention & compression
 read -p "TimescaleDB retention period (hours) [24]: " TIMESCALE_RETENTION_HOURS
