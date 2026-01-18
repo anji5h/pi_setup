@@ -18,9 +18,6 @@ cd "$DIR_NAME"
 echo ">>> Performing complete Docker cleanup before deployment..."
 docker compose down -v --remove-orphans 2>/dev/null || true
 
-echo ">>> Removing all unused containers, images, networks and volumes..."
-docker system prune -a
-
 echo ">>> Making init.sh executable..."
 chmod +x init.sh
 
