@@ -33,7 +33,7 @@ ENDURANCE_LEFT=$(echo "$SDMON_JSON" | jq '.enduranceRemainLifePercent // 0')
 AVG_ERASE_COUNT=$(echo "$SDMON_JSON" | jq '.avgEraseCount // 0')
 TOTAL_ERASE_COUNT=$(echo "$SDMON_JSON" | jq '.totalEraseCount // 0')
 SPARE_BLOCK_COUNT=$(echo "$SDMON_JSON" | jq '.spareBlockCount // 0')
-BAD_BLOCKS=$(echo "$SDMON_JSON" | jq '.laterBadBlockCount // 0')
+BAD_BLOCKS=$(echo "$SDMON_JSON" | jq '.initialBadBlockCount // 0')
 POWER_UPS=$(echo "$SDMON_JSON" | jq '.powerUpCount // 0')
 
 # === Write Prometheus metrics ===
@@ -61,9 +61,9 @@ sdcard_total_erase_count $TOTAL_ERASE_COUNT
 # TYPE sdcard_spare_block_count gauge
 sdcard_spare_block_count $SPARE_BLOCK_COUNT
 
-# HELP sdcard_later_bad_block_count Number of bad blocks detected after manufacture
-# TYPE sdcard_later_bad_block_count gauge
-sdcard_later_bad_block_count $BAD_BLOCKS
+# HELP sdcard_initial_bad_block_count Number of bad blocks detected at manufacture
+# TYPE sdcard_initial_bad_block_count gauge
+sdcard_initial_bad_block_count $BAD_BLOCKS
 
 # HELP sdcard_powerup_count Total power-up count
 # TYPE sdcard_powerup_count counter
