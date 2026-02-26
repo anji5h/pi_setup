@@ -4,19 +4,11 @@ After=local-fs.target
 
 [Service]
 Type=simple
+User=root
 ExecStart=/home/pi/fio/fio.sh
 Nice=10
 Restart=always
 RestartSec=5
-
-StandardOutput=journal
-StandardError=journal
-
-# Optional safety hardening
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=full
-ProtectHome=false
 
 [Install]
 WantedBy=multi-user.target
