@@ -71,7 +71,7 @@ log "Creating FIO job file → ${FIO_JOB_FILE}"
 
 cat > "${FIO_JOB_FILE}" << 'EOF'
 [global]
-directory=${TEST_DIR}
+directory=/home/pi/fio/test
 ioengine=libaio
 direct=1
 time_based=1
