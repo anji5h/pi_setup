@@ -1,49 +1,77 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+# vim: ft=bash ts=4 sw=4 sts=4 et
 
-FIO_DIR="/home/pi/fio"
-TEST_DIR="${FIO_DIR}/test"
-FIO_JOB="${FIO_DIR}/config.fio"
-SERVICE_NAME="fio.service"
-SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
+set -euo pipefail
+# set -x   # uncomment during debugging
 
-log() {
-    echo "[INFO] $1"
-}
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly FIO_BASE_DIR="/home/pi/fio"
+readonly TEST_DIR="${FIO_BASE_DIR}/test"
+readonly FIO_JOB_FILE="${FIO_BASE_DIR}/config.fio"
+readonly SERVICE_NAME="fio.service"
+readonly SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
 
-error() {
-    echo "[ERROR] $1" >&2
+# ─── Helpers ────────────────────────────────────────────────────────────────
+
+die() {
+    echo "[ERROR] $*" >&2
     exit 1
 }
 
-if [[ "$EUID" -ne 0 ]]; then
-    error "Run this script as root: sudo $0"
-fi
+log() {
+    echo "[INFO]  $*"
+}
 
-[[ -f "./fio/fio.sh" ]] || error "Missing ./fio/fio.sh"
-[[ -f "./fio/fio.service" ]] || error "Missing ./fio/fio.service"
+require_root() {
+    (( EUID == 0 )) || die "This script must be run as root (sudo)"
+}
 
-log "Creating directories..."
-install -d -m 755 "$FIO_DIR"
-install -d -m 755 "$TEST_DIR"
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-log "Installing service and script..."
-install -m 755 ./fio/fio.sh "$FIO_DIR/fio.sh"
-install -m 644 ./fio/fio.service "$SERVICE_PATH"
+file_exists() {
+    [[ -f "$1" ]]
+}
 
-if ! command -v fio >/dev/null 2>&1; then
-    log "Installing fio..."
-    apt-get update -y
-    apt-get install -y fio
+# ─── Main logic ─────────────────────────────────────────────────────────────
+
+require_root
+
+# Source files must exist **relative to script location**
+for file in "fio.sh" "fio.service"; do
+    if ! file_exists "${SCRIPT_DIR}/fio/${file}"; then
+        die "Required file not found: ${SCRIPT_DIR}/fio/${file}"
+    fi
+done
+
+log "Creating directories (755) …"
+install -d -m 0755 "${FIO_BASE_DIR}" "${TEST_DIR}" || die "Cannot create directories"
+
+log "Installing script and service file …"
+install -m 0755 "${SCRIPT_DIR}/fio/fio.sh"    "${FIO_BASE_DIR}/fio.sh"
+install -m 0644 "${SCRIPT_DIR}/fio/fio.service" "${SERVICE_FILE}"
+
+# ─── Install fio if missing ─────────────────────────────────────────────────
+if ! command_exists fio; then
+    log "Installing fio package …"
+    # ── non-interactive, no recommends/suggests to keep image lean ───────
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq ||
+        die "apt-get update failed"
+
+    apt-get install -y --no-install-recommends fio ||
+        die "fio installation failed"
 else
-    log "fio already installed."
+    log "fio is already installed."
 fi
 
-log "Creating FIO job file at $FIO_JOB..."
+# ─── Write job file ─────────────────────────────────────────────────────────
+log "Creating FIO job file → ${FIO_JOB_FILE}"
 
-cat > "$FIO_JOB" <<EOF
+cat > "${FIO_JOB_FILE}" << 'EOF'
 [global]
-directory=$TEST_DIR
+directory=${TEST_DIR}
 ioengine=libaio
 direct=1
 time_based=1
@@ -51,6 +79,8 @@ runtime=3600
 group_reporting=1
 fsync=1
 randrepeat=0
+iodepth_batch_submit=32
+iodepth_batch_complete_min=1
 
 [log_writer]
 rw=write
@@ -94,18 +124,24 @@ unlink=0
 iodepth=4
 EOF
 
-chmod 644 "$FIO_JOB"
+chmod 0644 "${FIO_JOB_FILE}" || die "Cannot chmod job file"
 
-log "Reloading systemd..."
-systemctl daemon-reload
+# ─── Systemd ────────────────────────────────────────────────────────────────
+log "Reloading systemd daemon …"
+systemctl daemon-reload || die "daemon-reload failed"
 
-log "Validating service..."
-systemd-analyze verify "$SERVICE_PATH" || error "Service validation failed"
+log "Verifying service file syntax …"
+if ! systemd-analyze verify "${SERVICE_FILE}" >/dev/null 2>&1; then
+    echo "Service file validation failed. Content follows:" >&2
+    cat "${SERVICE_FILE}" >&2
+    die "Invalid service file"
+fi
 
-log "Enabling service..."
-systemctl enable "$SERVICE_NAME"
+log "Enabling and (re)starting service …"
+systemctl enable --now --quiet "${SERVICE_NAME}" || die "Failed to enable/start ${SERVICE_NAME}"
 
-log "Restarting service..."
-systemctl restart "$SERVICE_NAME"
+# Optional: show quick status
+log "Setup appears successful. Current service status:"
+systemctl --no-pager status "${SERVICE_NAME}" | head -n 12
 
-log "Setup completed successfully."
+exit 0
