@@ -4,7 +4,7 @@ set -e
 FIO_DIR=/home/pi/fio
 FIO_JOB="$FIO_DIR/config.fio"
 FIO_LOG_DIR="$FIO_DIR/logs"
-SLEEP_INTERVAL=15
+SLEEP_INTERVAL=600
 
 mkdir -p "$FIO_LOG_DIR"
 
