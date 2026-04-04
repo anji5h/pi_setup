@@ -51,3 +51,13 @@ scrape_configs:
         labels:
           sd_card_type: 'industrial'
           group: 'rpi_cluster'
+  
+  # ========================================
+  # Thermal camera temperature metrics
+  # ========================================
+  - job_name: 'thermal_camera'
+    static_configs:
+      - targets:
+          - '172.17.142.143:8000'
+        labels:
+          group: 'thermal_monitor'
