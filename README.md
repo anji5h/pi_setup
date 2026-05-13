@@ -422,10 +422,7 @@ For detailed troubleshooting, see the README.md in each component folder:
 - Home Assistant issues: [home_assistant_setup/README.md](home_assistant_setup/README.md)
 
 ## 📄 License
+MIT LICENSE
 
-Customize as needed for your environment.
-
----
-
-**Last Updated**: 2024
-**Supported**: Raspberry Pi 2, 3, 4, 5 (32-bit and 64-bit OS)
+**Last Updated**: 2026
+**Supported**: Raspberry Pi 4, 5 (32-bit and 64-bit OS)
