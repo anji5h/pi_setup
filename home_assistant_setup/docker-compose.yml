@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with TimescaleDB extension
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: home_assistant_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-home_assistant}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - home_assistant
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Home Assistant Application
+  app:
+    build:
+      context: ./home_assistant
+      dockerfile: Dockerfile
+    container_name: home_assistant_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DATABASE:-home_assistant}
+      WORKLOAD: ${WORKLOAD:-HIGH}
+      WRITE_INTERVAL: ${WRITE_INTERVAL:-3}
+      READ_INTERVAL: ${READ_INTERVAL:-6}
+      TIMESCALE_RETENTION_HOURS: ${TIMESCALE_RETENTION_HOURS:-24}
+      TIMESCALE_COMPRESSION_HOURS: ${TIMESCALE_COMPRESSION_HOURS:-6}
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    volumes:
+      - app_data:/app/data
+    networks:
+      - home_assistant
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+  app_data:
+    driver: local
+
+networks:
+  home_assistant:
+    driver: bridge
