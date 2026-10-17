@@ -7,6 +7,9 @@
 #   GRAFANA_ADMIN_PASSWORD='yourpassword' ./monitoring_server_setup.sh
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ASSETS_DIR="$SCRIPT_DIR/assets/monitoring"
+
 INSTALL_DIR="${INSTALL_DIR:-$HOME/pi-monitoring}"
 GRAFANA_ADMIN_USER="${GRAFANA_ADMIN_USER:-admin}"
 GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD, e.g. GRAFANA_ADMIN_PASSWORD='...' ./monitoring_server_setup.sh}"
@@ -42,132 +45,21 @@ install_docker() {
   echo "Docker installed. Log out/in (or reboot) for docker-group membership to take effect."
 }
 
-write_configs() {
-  mkdir -p "$INSTALL_DIR/prometheus"
+deploy_stack() {
+  mkdir -p "$INSTALL_DIR"
+  cp "$ASSETS_DIR/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
+  cp -r "$ASSETS_DIR/prometheus" "$INSTALL_DIR/"
 
-  cat > "$INSTALL_DIR/docker-compose.yml" <<EOF
-services:
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=${PROM_RETENTION}'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    volumes:
-      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    networks:
-      - monitoring
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - monitoring
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    ports:
-      - "8080:8080"
-    restart: unless-stopped
-    networks:
-      - monitoring
-
-volumes:
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
-
-networks:
-  monitoring:
-    driver: bridge
+  cat > "$INSTALL_DIR/.env" <<EOF
+GRAFANA_ADMIN_USER=${GRAFANA_ADMIN_USER}
+GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+PROM_RETENTION=${PROM_RETENTION}
 EOF
-
-  # Edit the target IPs below if the cluster's node_exporter addresses change.
-  cat > "$INSTALL_DIR/prometheus/prometheus.yaml" <<'EOF'
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
-
-  # Ultra SD card group (5 nodes, node_exporter only)
-  - job_name: 'rpi_ultra'
-    static_configs:
-      - targets:
-          - '172.17.141.100:9100'   # pi-ultra-1
-          - '172.17.142.232:9100'   # pi-ultra-2
-          - '172.17.142.234:9100'   # pi-ultra-3
-          - '172.17.142.233:9100'   # pi-ultra-4
-          - '172.17.143.146:9100'   # pi-ultra-5
-        labels:
-          sd_card_type: 'ultra'
-          group: 'rpi_cluster'
-
-  # High Endurance SD card group (5 nodes, node_exporter + sdmon)
-  - job_name: 'rpi_high_endurance'
-    static_configs:
-      - targets:
-          - '172.17.143.51:9100'    # pi-hend-1
-          - '172.17.143.99:9100'    # pi-hend-2
-          - '172.17.141.106:9100'   # pi-hend-3
-          - '172.17.141.99:9100'    # pi-hend-4
-          - '172.17.141.107:9100'   # pi-hend-5
-        labels:
-          sd_card_type: 'high_endurance'
-          group: 'rpi_cluster'
-
-  # Industrial SD card group (5 nodes, node_exporter + sdmon)
-  - job_name: 'rpi_industrial'
-    static_configs:
-      - targets:
-          - '172.17.143.197:9100'   # pi-ind-1
-          - '172.17.141.98:9100'    # pi-ind-2
-          - '172.17.142.47:9100'    # pi-ind-3
-          - '172.17.141.201:9100'   # pi-ind-4
-          - '172.17.142.142:9100'   # pi-ind-5
-        labels:
-          sd_card_type: 'industrial'
-          group: 'rpi_cluster'
-
-  # Thermal camera temperature metrics
-  - job_name: 'thermal_camera'
-    static_configs:
-      - targets:
-          - '172.17.142.143:8000'
-        labels:
-          group: 'thermal_monitor'
-EOF
+  chmod 600 "$INSTALL_DIR/.env"
 }
 
 install_docker
-write_configs
+deploy_stack
 
 echo "Starting monitoring stack..."
 cd "$INSTALL_DIR"
@@ -178,3 +70,6 @@ IP_ADDR=$(hostname -I | awk '{print $1}')
 echo "Prometheus: http://${IP_ADDR}:9090"
 echo "Grafana:    http://${IP_ADDR}:3000  (user: ${GRAFANA_ADMIN_USER})"
 echo "cAdvisor:   http://${IP_ADDR}:8080"
+echo ""
+echo "Config lives in ${INSTALL_DIR} (edit prometheus/prometheus.yaml for scrape targets,"
+echo ".env for credentials/retention, then: cd ${INSTALL_DIR} && docker compose restart)"

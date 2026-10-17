@@ -33,9 +33,11 @@ network and is intentionally out of scope for this README — see
 
 ## Scripts
 
-Each target runs exactly one self-contained script (no need to clone
-sub-folders or chain multiple installers). Clone this repo on the target
-machine, then run the script for its role:
+Each target runs exactly one installer script (no need to chain multiple
+installers or hunt through sub-folders). Clone this repo on the target
+machine and keep the `assets/` folder alongside the script you run — the
+installer copies its systemd units / configs from there instead of
+generating them inline:
 
 | Script | Run on | Installs |
 |--------|--------|----------|
@@ -43,8 +45,28 @@ machine, then run the script for its role:
 | [`storage_cluster_setup.sh`](storage_cluster_setup.sh) | pi-hend-1..5, pi-ind-1..5 | Node Exporter + sdmon + custom sdmon exporter |
 | [`monitoring_server_setup.sh`](monitoring_server_setup.sh) | central monitoring server | Docker + Prometheus + Grafana + cAdvisor |
 
-All three are idempotent (safe to re-run) and auto-detect CPU architecture
-(arm64/armv7) — no manual editing required.
+```
+pi_setup/
+├── ultra_cluster_setup.sh
+├── storage_cluster_setup.sh
+├── monitoring_server_setup.sh
+├── assets/
+│   ├── node_exporter.service            # systemd unit, copied by both cluster scripts
+│   ├── sdmon_exporter/                  # copied by storage_cluster_setup.sh
+│   │   ├── sdmon_exporter.sh
+│   │   ├── sdmon_exporter.service
+│   │   └── sdmon_exporter.timer
+│   └── monitoring/                      # copied by monitoring_server_setup.sh
+│       ├── docker-compose.yml
+│       └── prometheus/prometheus.yaml
+└── home_assistant_setup/                # separate workload, not covered here
+```
+
+All three scripts are idempotent (safe to re-run) and auto-detect CPU
+architecture (arm64/armv7) — no manual editing required. To change sdmon's
+monitored device, Node Exporter's service file, or the Prometheus scrape
+targets, edit the relevant file under `assets/` directly and re-run the
+installer (or `docker compose restart` for the monitoring server).
 
 ### Ultra cluster
 
@@ -77,16 +99,17 @@ cd ~/pi_monitoring_repo
 GRAFANA_ADMIN_PASSWORD='choose-a-strong-password' ./monitoring_server_setup.sh
 ```
 
-This installs Docker (if not already present) and starts Prometheus,
-Grafana, and cAdvisor via Docker Compose in `~/pi-monitoring` (override with
-`INSTALL_DIR`).
+This installs Docker (if not already present) and copies
+`assets/monitoring/` into `~/pi-monitoring` (override with `INSTALL_DIR`),
+writing a `.env` file there with the Grafana credentials and retention
+setting, then runs `docker compose up -d`.
 
 - Prometheus: `http://<server_ip>:9090`
 - Grafana: `http://<server_ip>:3000`
 - cAdvisor: `http://<server_ip>:8080`
 
-Scrape targets are defined in the embedded `prometheus.yaml` the script
-writes to `$INSTALL_DIR/prometheus/prometheus.yaml`. If a Pi's IP changes,
+Scrape targets live in `$INSTALL_DIR/prometheus/prometheus.yaml` (copied
+from `assets/monitoring/prometheus/prometheus.yaml`). If a Pi's IP changes,
 edit that file and run `docker compose restart prometheus` from
 `$INSTALL_DIR`.
 

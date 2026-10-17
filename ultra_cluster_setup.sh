@@ -3,6 +3,9 @@
 # Run as a regular user with sudo privileges (not as root): ./ultra_cluster_setup.sh
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ASSETS_DIR="$SCRIPT_DIR/assets"
+
 NODE_EXPORTER_VERSION="${NODE_EXPORTER_VERSION:-1.12.1}"
 BIN_DIR="/usr/local/bin"
 TEXTFILE_DIR="/var/lib/node_exporter/textfile_collector"
@@ -22,6 +25,8 @@ install_node_exporter() {
     installed_version=$("${BIN_DIR}/node_exporter" --version 2>&1 | head -1 | awk '{print $3}')
     if [ "$installed_version" = "$NODE_EXPORTER_VERSION" ]; then
       echo "node_exporter ${NODE_EXPORTER_VERSION} already installed. Ensuring service is running..."
+      sudo cp "$ASSETS_DIR/node_exporter.service" /etc/systemd/system/node_exporter.service
+      sudo systemctl daemon-reload
       sudo systemctl enable --now node_exporter
       return
     fi
@@ -35,28 +40,14 @@ install_node_exporter() {
 
   local tmp
   tmp=$(mktemp -d)
-  trap 'rm -rf "$tmp"' RETURN
-
   curl -fsSL -o "$tmp/node_exporter.tar.gz" \
     "https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-${ARCH}.tar.gz"
   tar xzf "$tmp/node_exporter.tar.gz" -C "$tmp"
   sudo systemctl stop node_exporter 2>/dev/null || true
   sudo mv "$tmp/node_exporter-${NODE_EXPORTER_VERSION}.linux-${ARCH}/node_exporter" "$BIN_DIR/"
+  rm -rf "$tmp"
 
-  sudo tee /etc/systemd/system/node_exporter.service > /dev/null <<EOF
-[Unit]
-Description=Node Exporter
-After=network.target
-
-[Service]
-ExecStart=${BIN_DIR}/node_exporter --collector.textfile.directory=${TEXTFILE_DIR}
-User=nobody
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+  sudo cp "$ASSETS_DIR/node_exporter.service" /etc/systemd/system/node_exporter.service
   sudo systemctl daemon-reload
   sudo systemctl enable --now node_exporter
 }
