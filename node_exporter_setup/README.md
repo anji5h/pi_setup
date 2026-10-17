@@ -37,7 +37,7 @@ sudo ./install.sh
 3. Run with sudo: `sudo ./install.sh`
 
 The script will:
-- Download Node Exporter v1.10.2 (or specified version)
+- Download Node Exporter v1.12.1 (or specified version)
 - Extract and install the binary to `/usr/local/bin/`
 - Create a systemd service for automatic startup
 - Enable and start the service

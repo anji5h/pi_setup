@@ -22,8 +22,8 @@ The sdmon exporter runs as a systemd timer service and exposes metrics in Promet
 
 ## Architecture Support
 
-- **ARMv7 (32-bit)**: Raspberry Pi 2, 3, 3B+, 4, 5 running 32-bit OS
-- **ARM64 (64-bit)**: Edit `install.sh` and change `sdmon-armv7.tar.gz` to `sdmon-arm64.tar.gz`
+- **ARM64 (64-bit)**: Raspberry Pi 4, 5 running 64-bit OS (default)
+- **ARMv7 (32-bit)**: Edit `install.sh` and change `sdmon-arm64.tar.gz` to `sdmon-armv7.tar.gz`
 
 ## Folder Structure
 

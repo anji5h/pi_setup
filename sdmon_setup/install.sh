@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Configuration for ARMv7 (32-bit)
-SDMON_ARCHIVE="sdmon-armv7.tar.gz"
+# Configuration for ARM64 (64-bit)
+SDMON_ARCHIVE="sdmon-arm64.tar.gz"
 SDMON_URL="https://github.com/Ognian/sdmon/releases/download/v0.9.0/${SDMON_ARCHIVE}"
 
 echo "--- Installing jq ---"

@@ -5,8 +5,8 @@ set -e
 
 # --- Configuration ---
 # Check https://github.com/prometheus/node_exporter/releases for the latest version
-VERSION="1.10.2"
-ARCH="armv7" # Use 'arm64' if you are using a 64-bit Raspberry Pi OS
+VERSION="1.12.1"
+ARCH="arm64" # Use 'armv7' if you are using a 32-bit Raspberry Pi OS
 USER="nobody"
 BIN_DIR="/usr/local/bin"
 TEXTFILE_DIR="/var/lib/node_exporter/textfile_collector"

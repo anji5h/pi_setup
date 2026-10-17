@@ -76,4 +76,3 @@ sdcard_powerup_count $POWER_UPS
 METRICS
 
 mv "$TEMP_FILE" "$OUTPUT"
-EOF

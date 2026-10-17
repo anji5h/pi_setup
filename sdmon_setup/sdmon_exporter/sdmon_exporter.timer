@@ -9,4 +9,3 @@ Unit=sdmon_exporter.service
 
 [Install]
 WantedBy=timers.target
-EOF
