@@ -47,12 +47,16 @@ generating them inline:
 
 ```
 pi_setup/
-├── ultra_cluster_setup.sh
-├── storage_cluster_setup.sh
+├── ultra_cluster_setup.sh               # orchestrator: calls install/node_exporter.sh
+├── storage_cluster_setup.sh             # orchestrator: calls the three install/ scripts below
 ├── monitoring_server_setup.sh
+├── install/
+│   ├── node_exporter.sh                 # installs/updates Node Exporter (standalone-runnable)
+│   ├── sdmon.sh                         # installs the sdmon binary (standalone-runnable)
+│   └── sdmon_exporter.sh                # installs the custom sdmon exporter (standalone-runnable)
 ├── assets/
-│   ├── node_exporter.service            # systemd unit, copied by both cluster scripts
-│   ├── sdmon_exporter/                  # copied by storage_cluster_setup.sh
+│   ├── node_exporter.service            # systemd unit, copied by install/node_exporter.sh
+│   ├── sdmon_exporter/                  # copied by install/sdmon_exporter.sh
 │   │   ├── sdmon_exporter.sh
 │   │   ├── sdmon_exporter.service
 │   │   └── sdmon_exporter.timer
@@ -62,11 +66,15 @@ pi_setup/
 └── home_assistant_setup/                # separate workload, not covered here
 ```
 
-All three scripts are idempotent (safe to re-run) and auto-detect CPU
-architecture (arm64/armv7) — no manual editing required. To change sdmon's
-monitored device, Node Exporter's service file, or the Prometheus scrape
-targets, edit the relevant file under `assets/` directly and re-run the
-installer (or `docker compose restart` for the monitoring server).
+The `install/*.sh` scripts can also be run directly (e.g. to reinstall just
+Node Exporter: `./install/node_exporter.sh`); the cluster scripts are thin
+wrappers that call them in the right order for that cluster's role.
+
+All scripts are idempotent (safe to re-run) and auto-detect CPU architecture
+(arm64/armv7) — no manual editing required. To change sdmon's monitored
+device, Node Exporter's service file, or the Prometheus scrape targets, edit
+the relevant file under `assets/` directly and re-run the installer (or
+`docker compose restart` for the monitoring server).
 
 ### Ultra cluster
 
